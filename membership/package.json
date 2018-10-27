@@ -1,0 +1,19 @@
+{
+  "name": "membership",
+  "version": "1.0.0",
+  "description": "user memebership",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongoose": "5.3.7",
+    "should": "13.2.3"
+  }
+}

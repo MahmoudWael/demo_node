@@ -4,7 +4,7 @@ var application = function (args) {
     app.password = args.password;
     app.confirm = args.confirm;
     app.status = "pending";
-    app.messgae = null;
+    app.message = null;
     app.isValid = function () {
         return app.status == "validated";
     }
@@ -13,7 +13,7 @@ var application = function (args) {
     }
     app.setInvalid = function (message) {
         app.status = "invalid";
-        app.messgae = message
+        app.message = message
     }
     app.validate = function(){
         app.status = "validated"

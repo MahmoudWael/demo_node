@@ -30,7 +30,7 @@ describe('registration', () => {
                 done();
             });
         });
-        it('is successful', () => {
+        it('is successful', () => {            
             regResult.success.should.equal(true);
         });
         it('creates a new user', () => {
@@ -123,7 +123,7 @@ describe('registration', () => {
             }, function (err, db) {
                 db.collection('users').deleteMany({}, function (err, deleted) {
                     reg.applyForMembership(newUser, function (err, result) {
-                        reg.applyForMembership(newUser, function (err, nextResult) {
+                        reg.applyForMembership(newUser, function (err, nextResult) {                            
                             regResult = nextResult;
                             done();
                         })
@@ -131,7 +131,7 @@ describe('registration', () => {
                 });
             })
         });
-        it('is not successful', () => {
+        it('is not successful', () => {            
             regResult.success.should.equal(false);
         });
         it('tells user that email already exists', () => {

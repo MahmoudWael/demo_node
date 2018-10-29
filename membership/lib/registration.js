@@ -15,6 +15,7 @@ var RegResults = function () {
 
 var registration = function (db) {
     var self = this;
+    var continueWith = null;
 
     var validateInputs = function (app) {
         if (!app.email || !app.password) {
@@ -26,62 +27,87 @@ var registration = function (db) {
         }
     }
 
-    var checkIfUserExists = function (app, next) {
-        var collection = db.collection('users');
-        collection.find({
-            email: app.email
-        }).toArray(next);
+    var checkIfUserExists = function (app) {
+        return new Promise((resolve, reject) => {
+            db.collection('users').find({
+                email: app.email
+            }).toArray(function (err, user) {
+                if (err)
+                    return reject(err);
+                if (user == undefined || user.length == 0) {
+                    return resolve(user)
+                }
+                app.setInvalid("This Email already exists");
+                return registrationFailed(app);
+            });
+        })
     }
 
-    var saveUser = function (user, next) {
-        db.collection('users').insertOne(user, next);
+    var saveUser = function (app) {
+        var user = new User(app);
+        user.status = "approved";
+        user.signInCount = 1;
+        user.hashedPassword = bc.hashSync(app.password);
+        return new Promise((resolve, reject) => {
+            db.collection('users').insertOne(user, function (err, inserteduser) {
+                if (err)
+                    return reject(err);
+                app.user = inserteduser.ops[0];
+                return resolve(inserteduser);
+            })
+        });
     }
 
-    var addLogEntry = function (userId, next) {
+    var addLogEntry = function (app) {
         var log = new Log({
             subject: "Registration",
-            userId: userId,
+            userId: app.user._id,
             entry: "Successfully Registered"
         });
-        db.collection('logs').insertOne(log, next)
+        return new Promise((resolve, reject) => {
+            db.collection('logs').insertOne(log, function (err, logData) {
+                if (err)
+                    return reject(err)
+                app.log = logData;
+                resolve(logData)
+            });
+        });
     }
-    self.applyForMembership = function (args, next) {
-        var regResults = new RegResults();
-        var app = new Application(args);
 
-        //validate inputs 
+    var registrationFailed = function (app) {
+        var regResults = new RegResults();
+        regResults.success = false;
+        regResults.message = app.message;
+        if (continueWith) {
+            continueWith(null, regResults);
+        }
+    };
+
+    self.applyForMembership = function (args, next) {
+        var app = new Application(args);
+        var regResults = new RegResults();
+        continueWith = next;
         validateInputs(app);
         if (app.isValid()) {
-            //checkk to see if email exists
-            checkIfUserExists(app, function (err, exists) {
-                assert.ok(err === null, err)
-                if (exists === undefined || exists.length === 0) {
-                    //create new user                
-                    var user = new User(app);
-                    user.status = "approved";
-                    user.signInCount = 1;
-                    //hash the passsword
-                    user.hashedPassword = bc.hashSync(app.password);
-                    saveUser(user, function (err, newUser) {
-                        assert.ok(err === null, err)
-                        regResults.user = newUser.ops[0];
-
-                        //creates log entry
-                        addLogEntry(newUser.ops[0]._id, function (err, newLog) {
-                            regResults.log = newLog;
-                            regResults.success = true;
-                            regResults.message = "welcome!";
-                            next(null, regResults);
-                        })
-                    })
-                } else {
-                    regResults.message = "This Email already exists";
-                    next(null, regResults);
-                }
-            });
+            checkIfUserExists(app)
+                .then(() => {
+                    return saveUser(app)
+                })
+                .then(() => {
+                    return addLogEntry(app)
+                })
+                .then(() => {
+                    regResults.user = app.user
+                    regResults.log = app.log;
+                    regResults.success = true;
+                    regResults.message = "welcome!";
+                    continueWith(null, regResults);
+                })
+                .catch(err => {
+                    next(err, null)
+                })
         } else {
-            regResults.message = app.message;
-            next(null, regResults);
+            registrationFailed(app);
         }
     }
 }

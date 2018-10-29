@@ -8,13 +8,14 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha --timeout 15000 -w"
+    "test": "mocha --timeout 20000 -w"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
     "mongoose": "5.3.7",
+    "q": "^1.5.1",
     "should": "13.2.3"
   }
 }

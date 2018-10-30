@@ -27,8 +27,8 @@ observer.findPattern(['log.js', 'app.js'], '/app.set/g')
 .on('error', err => console.log('Error emitted: ' + err.message));
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+app.use(express.static(__dirname + '../public'));
+app.set('view engine', 'pug');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
